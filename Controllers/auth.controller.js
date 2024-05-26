@@ -16,8 +16,8 @@ const sendToken = (user, statusCode, res) => {
   };
 
   //if we are in production, we need to set the cookie to secure to be sent only in https
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-   res.cookie('jwt', token, cookieOptions);
+  // if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  res.cookie('jwt', token, cookieOptions);
 
   //Remove the password from the output
   user.password = undefined;
