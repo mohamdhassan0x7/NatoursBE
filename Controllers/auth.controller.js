@@ -14,7 +14,7 @@ const sendToken = (user, statusCode, res) => {
     ),
     httpOnly: true,
     secure: false, // set to false for local testing
-    sameSite: "lax"
+    sameSite: "none"
     // httpOnly: true,
   };
 
