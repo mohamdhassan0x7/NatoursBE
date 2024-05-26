@@ -12,8 +12,9 @@ const sendToken = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 60 * 60 * 1000,
     ),
-    secure: true, // set to false for local testing
-    sameSite: "none"
+    // secure: true, // set to false for local testing
+    // sameSite: "none",
+    httpOnly: true,
   };
 
   //if we are in production, we need to set the cookie to secure to be sent only in https
