@@ -12,7 +12,9 @@ const sendToken = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 60 * 60 * 1000,
     ),
-    domain: 'localhost',
+    httpOnly: true,
+    secure: false, // set to false for local testing
+    sameSite: "lax"
     // httpOnly: true,
   };
 
