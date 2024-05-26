@@ -10,19 +10,18 @@ const sendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
   const cookieOptions = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 60 *60 * 1000,
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 60 * 60 * 1000,
     ),
     // httpOnly: true,
-
   };
 
   //if we are in production, we need to set the cookie to secure to be sent only in https
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-  res.cookie('jwt', token, cookieOptions);
+   res.cookie('jwt', token, cookieOptions);
 
   //Remove the password from the output
   user.password = undefined;
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     status: 'success',
     token,
     User: user,
@@ -43,16 +42,16 @@ exports.signUp = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirem: req.body.passwordConfirem,
   });
-  res.status(201).json({
+  return res.status(201).json({
     status: 'success',
     data: {
       user: newUser,
     },
-  })
+  });
 });
 
 exports.uploadImageForSignUp = catchAsync(async (req, res, next) => {
-  console.log(req.body)
+  console.log(req.body);
   if (!req.file) {
     return next(new AppError('Please upload a photo', 400));
   }
@@ -60,14 +59,13 @@ exports.uploadImageForSignUp = catchAsync(async (req, res, next) => {
     folder: `user/${req.params.id}/photo`,
   });
   await User.findByIdAndUpdate(req.params.id, { photo: secure_url });
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       secure_url,
     },
   });
-})
-
+});
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -91,15 +89,15 @@ exports.logout = catchAsync(async (req, res, next) => {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
   });
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
   });
-})
+});
 
 exports.checkUserLoggedIn = catchAsync(async (req, res, next) => {
   //1) Getting token and check if it's there
   let token;
-  if(req.cookies?.jwt){
+  if (req.cookies?.jwt) {
     token = req.cookies.jwt;
   }
   // if (
@@ -107,8 +105,7 @@ exports.checkUserLoggedIn = catchAsync(async (req, res, next) => {
   //   req.headers.authorization.startsWith('Bearer')
   // ) {
   //   token = req.headers.authorization.split(' ')[1];
-  // } 
-  
+  // }
   else {
     return next(
       new AppError('You are not logged in! Please log in to get access', 401),
@@ -175,7 +172,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
       message,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       status: 'success',
       message: 'Token sent to email!',
     });
@@ -217,8 +214,12 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
-  console.log("update password")
-  console.log(req.body.newPassword, req.body.newPasswordConfirm, req.body.currentPassword)
+  console.log('update password');
+  console.log(
+    req.body.newPassword,
+    req.body.newPasswordConfirm,
+    req.body.currentPassword,
+  );
   //1) Get user from collection
   const user = await User.findById(req.user.id).select('+password');
   //2) Check if posted current password is correct
@@ -275,7 +276,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
 //   childPy.stdout.on('data', (data) => {
 //     const AI_response = JSON.parse(data.toString());
-//     res.status(200).json({
+//     return res.status(200).json({
 //       status: 'success',
 //       response: AI_response,
 //     });
@@ -292,12 +293,11 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
 // const Llama = require('../Util/Llama2_model')
 
-
 const axios = require('axios');
 
 exports.chatBot = (req, res, next) => {
   const messeges = req.body.messeges;
-  const sys = process.env.LLAMA_SYS_MSG;;
+  const sys = process.env.LLAMA_SYS_MSG;
   messeges.unshift(JSON.parse(sys));
   axios
     .post(
@@ -320,7 +320,7 @@ exports.chatBot = (req, res, next) => {
     )
     .then(
       (response) => {
-        res.status(200).json({
+        return res.status(200).json({
           status: 'success',
           response: response['data']['choices'][0]['message'],
         });

@@ -7,7 +7,7 @@ const cloudinary = require('../Util/cloudinary.config');
 
 exports.allUsers = catchAsync(async (req, res, next) => {
   const users = await User.find();
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     length: users.length,
     data: {
@@ -27,7 +27,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     { firstName, lastName },
     { runValidators: true, new: true },
   );
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       user,
@@ -37,7 +37,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 
 exports.deactiveMe = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(req.user.id, { active: false });
-  res.status(204).json({
+  return res.status(204).json({
     status: 'success',
     data: null,
   });
@@ -54,7 +54,7 @@ exports.getMe = catchAsync(async (req, res, nex) => {
   // });
   // user = { ...user._doc, reviews };
   // console.log(reviews);
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       user,
@@ -67,7 +67,7 @@ exports.getMyWishlist = catchAsync(async (req, res, next) => {
     path: 'wishList',
     select: 'name imageCover price summary',
   });
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       wishList: user.wishList,
@@ -80,7 +80,7 @@ exports.getMyBooking = catchAsync(async (req, res, next) => {
     path: 'booking',
     select: 'name imageCover price summary',
   });
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       booking: user.booking,
@@ -102,7 +102,7 @@ exports.addTourToWishlist = catchAsync(async (req, res, next) => {
   user.wishList.push(tourId);
   await user.save({ validateBeforeSave: false });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       user,
@@ -123,7 +123,7 @@ exports.removeTourFromWishlist = catchAsync(async (req, res, next) => {
   user.wishList = user.wishList.filter((el) => el != tourId);
   await user.save({ validateBeforeSave: false });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
   });
 });
@@ -149,7 +149,7 @@ exports.addBooking = catchAsync(async (req, res, next) => {
   tour.numBookings += numTickets;
   await tour.save({ validateBeforeSave: false });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       user,
@@ -176,7 +176,7 @@ exports.removeBooking = catchAsync(async (req, res, next) => {
   tour.numBookings -= numTickets;
   await tour.save({ validateBeforeSave: false });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
   });
 });
@@ -190,7 +190,7 @@ exports.updateProfilePic = catchAsync(async (req, res, next) => {
   });
   await User.findByIdAndUpdate(req.user.id, { photo: secure_url });
   const user = await User.findById(req.user.id);
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       user,
@@ -201,7 +201,7 @@ exports.updateProfilePic = catchAsync(async (req, res, next) => {
 //Only for Admin
 exports.deleteUser = catchAsync(async (req, res, next) => {
   await User.findByIdAndDelete(req.params.id);
-  res.status(204).json({
+  return res.status(204).json({
     status: 'success',
     data: null,
   });
@@ -212,7 +212,7 @@ exports.getUser = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('No user found with that ID', 404));
   }
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       user,
@@ -233,7 +233,7 @@ exports.IsInMyWishlist = catchAsync(async (req, res, next) => {
       },
     });
   }
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       isInWishlist: false,
@@ -252,7 +252,7 @@ exports.IsInMyBooking = catchAsync(async (req, res, next) => {
       },
     });
   }
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       isInBooking: false,

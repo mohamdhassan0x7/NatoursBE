@@ -1,8 +1,8 @@
-const AppError = require("../Util/appError");
+const AppError = require('../Util/appError');
 
 //Error sent to development environment has more details than the one sent to production environment
 const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
+  return res.status(err.statusCode).json({
     status: err.status,
     error: err,
     message: err.message,
@@ -12,13 +12,13 @@ const sendErrorDev = (err, res) => {
 const sendErrorProd = (err, res) => {
   //Operational error: send message to the client
   if (err.isOperational) {
-    res.status(err.statusCode).json({
+    return res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
   } else {
     //Programming error: don't send error details to the client, send a generic message
-    res.status(500).json({
+    return res.status(500).json({
       status: 'error',
       message: 'Something went wrong',
     });
@@ -38,19 +38,15 @@ const handleDuplicateFieldsDB = (err) => {
 };
 
 //put the error messages in an array and then join them with a dot to make a single string of error messages
-const handleValidationErrorDB = err =>{
-  const errors = Object.values(err.errors).map(el=>el.message);
+const handleValidationErrorDB = (err) => {
+  const errors = Object.values(err.errors).map((el) => el.message);
   const message = `Invalid input data. ${errors.join('. ')}`;
   return new AppError(message, 400);
+};
 
-}
-
-const handleJWTErrors = error=>{
+const handleJWTErrors = (error) => {
   return new AppError('Invalid token. Please log in again', 401);
-}
-
-
-
+};
 
 //the next function is taking an error object as an argument and returning a new error object with a message property
 //it may need to create a new error object with a message property and a status code property based on the error object passed to it
@@ -77,7 +73,10 @@ module.exports = (err, req, res, next) => {
       error = handleValidationErrorDB(error);
     }
     //handling invalid token error and expired token error
-    if(error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError'){
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'TokenExpiredError'
+    ) {
       error = handleJWTErrors(error);
     }
     sendErrorProd(error, res);

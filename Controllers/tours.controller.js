@@ -8,7 +8,7 @@ exports.createTour = catchAsync(async (req, res, next) => {
   const newTour = await Tour.create(req.body);
   const image = req.file.destination + '/' + req.file.filename;
 
-  res.status(201).json({
+  return res.status(201).json({
     status: 'success',
     data: {
       tour: newTour,
@@ -23,11 +23,9 @@ exports.aliasTopTours = (req, res, next) => {
 };
 
 exports.getAllTours = catchAsync(async (req, res, next) => {
-
   const allTours = await Tour.find();
-  const maxPrice = Math.max(...allTours.map(tour => tour.price));
-  const minPrice = Math.min(...allTours.map(tour => tour.price));
-
+  const maxPrice = Math.max(...allTours.map((tour) => tour.price));
+  const minPrice = Math.min(...allTours.map((tour) => tour.price));
 
   //Filter Features
 
@@ -74,7 +72,7 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
   const tours = await features.query;
   const totalDocuments = features.totalDocuments;
   const totalPages = Math.ceil(totalDocuments / (req.query.limit * 1 || 100));
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     maxPrice,
     minPrice,
@@ -90,7 +88,7 @@ exports.getOneTour = catchAsync(async (req, res, next) => {
     path: 'reviews',
     populate: {
       path: 'user',
-    }
+    },
   });
 
   //handle the error if the tour is not found
@@ -98,7 +96,7 @@ exports.getOneTour = catchAsync(async (req, res, next) => {
     return next(new AppError('No tour found with that ID', 404));
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       tour,
@@ -115,7 +113,7 @@ exports.updateTour = catchAsync(async (req, res, next) => {
   if (!tour) {
     return next(new AppError('No tour found with that ID', 404));
   }
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     tour,
   });
@@ -127,7 +125,7 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
   if (!tour) {
     return next(new AppError('No tour found with that ID', 404));
   }
-  res.status(204).json({
+  return res.status(204).json({
     status: 'success',
   });
 });
@@ -153,7 +151,7 @@ exports.toursStats = catchAsync(async (req, res, next) => {
     },
   ]);
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       stats,
@@ -201,7 +199,7 @@ exports.monthlyPlan = catchAsync(async (req, res, next) => {
     },
   ]);
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       plan,
@@ -209,103 +207,113 @@ exports.monthlyPlan = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getToursWithin = catchAsync(async(req, res, next)=>{
-  const {distance, latlng, unit} = req.params;
-  const [lat, lng] = latlng.split(',')
-  if(!lat || !lng){
-    next(new AppError('please provide latitude and longitude in the format lat,lng', 400))
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'please provide latitude and longitude in the format lat,lng',
+        400,
+      ),
+    );
   }
   //convert the distance to radians by dividing it by the radius of the earth based on the unit (mile of kilometer)
-  const radius = unit === 'mi'? distance/3963.2 : distance/6378.1;
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
 
   const tours = await Tour.find({
-    startLocation: {$geoWithin: {$centerSphere: [[lng, lat], radius]}}
-  })
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     results: tours.length,
     data: {
-      data: tours
-    }
-  })
-})
+      data: tours,
+    },
+  });
+});
 
-exports.getDistances = catchAsync(async(req, res, next)=>{
-  const {latlng, unit} = req.params;
-  const [lat, lng] = latlng.split(',')
-  if(!lat || !lng){
-    next(new AppError('please provide latitude and longitude in the format lat,lng', 400))
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'please provide latitude and longitude in the format lat,lng',
+        400,
+      ),
+    );
   }
   //create multiplier, to convert resulted distance(whic is in meters) to miles or kilometers based on the unit(mile or kilometer
-  const multiplier = unit === 'mi'? 0.000621371 : 0.001;  
-  const tours = await Tour.aggregate([{
-    $geoNear: {
-      near: {
-        type: 'Point',
-        coordinates: [lng*1, lat*1]
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+  const tours = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [lng * 1, lat * 1],
+        },
+        distanceField: 'distance',
+        distanceMultiplier: multiplier,
       },
-      distanceField: 'distance',
-      distanceMultiplier: multiplier
-    }
     },
     {
       $project: {
         distance: 1,
-        name: 1
-      }
-
-    }])
-  res.status(200).json({
+        name: 1,
+      },
+    },
+  ]);
+  return res.status(200).json({
     status: 'success',
     data: {
-      data: tours
-    }
-  })
-})
+      data: tours,
+    },
+  });
+});
 
-
-exports.addTourImageCover = catchAsync(async(req, res, next)=>{
-    const tour = await Tour.findById(req.params.id);
-    if(!tour){
-      return next(new AppError('No tour found with that ID', 404));
-    }
-    if(!req.file){
-      return next(new AppError('Please upload an image', 400));
-    }
-    const image = await cloudinary.uploader.upload(req.file.path,{
-      folder: `tour/${tour._id}/imageCover`
-    });
-
-    console.log(image)
-    tour.imageCover = image.secure_url;
-    await tour.save({validateBeforeSave: false});
-    res.status(200).json({
-      status: 'success',
-      data: {
-        tour
-      }
-    })
-})
-
-exports.addTourImages = catchAsync(async(req, res, next)=>{
+exports.addTourImageCover = catchAsync(async (req, res, next) => {
   const tour = await Tour.findById(req.params.id);
-  if(!tour){
+  if (!tour) {
     return next(new AppError('No tour found with that ID', 404));
   }
-  const images = []
+  if (!req.file) {
+    return next(new AppError('Please upload an image', 400));
+  }
+  const image = await cloudinary.uploader.upload(req.file.path, {
+    folder: `tour/${tour._id}/imageCover`,
+  });
+
+  console.log(image);
+  tour.imageCover = image.secure_url;
+  await tour.save({ validateBeforeSave: false });
+  return res.status(200).json({
+    status: 'success',
+    data: {
+      tour,
+    },
+  });
+});
+
+exports.addTourImages = catchAsync(async (req, res, next) => {
+  const tour = await Tour.findById(req.params.id);
+  if (!tour) {
+    return next(new AppError('No tour found with that ID', 404));
+  }
+  const images = [];
   for (const file of req.files) {
-    const image = await cloudinary.uploader.upload(file.path,{
-      folder: `tour/${tour._id}/images`
-    })
+    const image = await cloudinary.uploader.upload(file.path, {
+      folder: `tour/${tour._id}/images`,
+    });
     images.push(image.secure_url);
   }
   tour.images = images;
-  await tour.save({validateBeforeSave: false});
-  res.status(200).json({
+  await tour.save({ validateBeforeSave: false });
+  return res.status(200).json({
     status: 'success',
     data: {
-      tour
-    }
-  })
-})
+      tour,
+    },
+  });
+});
